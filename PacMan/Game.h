@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics/RenderWindow.hpp>
 #include "Entity.h"
+#include "TileManager.h"
 
 class Game
 {
@@ -13,5 +14,6 @@ public:
 
 private:
 	Entity m_pacMan;
+	TileManager m_tileManager;
 };
 

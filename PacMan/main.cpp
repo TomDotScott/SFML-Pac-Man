@@ -5,7 +5,7 @@
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Pac-Man");
+    sf::RenderWindow window(sf::VideoMode(800, 800), "SFML Pac-Man");
 
     Game game;
 
@@ -26,7 +26,7 @@ int main()
         game.Input();
 
     	// Game tick every 100 ms
-        while (clock.getElapsedTime() >= sf::milliseconds(100))
+        while (clock.getElapsedTime() >= sf::milliseconds(200))
         {
             game.Update();
             clock.restart();

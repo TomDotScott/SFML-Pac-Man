@@ -1,12 +1,14 @@
 #include "Game.h"
-
+#include <iostream>
 #include <SFML/Window/Keyboard.hpp>
-
 
 Game::Game() :
 m_pacMan()
 {
-	
+	if(!m_tileManager.LoadLevel("Data\\Level.csv"))
+	{
+		std::cout << "Error loading level data" << std::endl;
+	}
 }
 
 void Game::Input()
@@ -31,10 +33,12 @@ void Game::Input()
 
 void Game::Update()
 {
+	m_tileManager.CheckEntityLevelCollisions(m_pacMan);
 	m_pacMan.Update();
 }
 
 void Game::Render(sf::RenderWindow& window)
 {
+	m_tileManager.Render(window);
 	m_pacMan.Render(window);
 }
