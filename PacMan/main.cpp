@@ -1,10 +1,16 @@
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
 
+#include "Game.h"
+
 int main()
 {
     sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Pac-Man");
-    
+
+    Game game;
+
+    sf::Clock clock;
+	
 	// Start the game loop
     while (window.isOpen())
     {
@@ -16,8 +22,18 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        window.clear();
+
+        game.Input();
+
+    	// Game tick every 100 ms
+        while (clock.getElapsedTime() >= sf::milliseconds(100))
+        {
+            game.Update();
+            clock.restart();
+        }
     	
+        window.clear();
+        game.Render(window);
         window.display();
     }
     return EXIT_SUCCESS;
