@@ -12,6 +12,7 @@ bool TileManager::LoadLevel(const std::string& filename)
 {
 	// Clear the level data if it exists
 	m_levelData.clear();
+	m_pickupLocations.clear();
 
 	std::ifstream file(filename);
 	if (!file.is_open())
@@ -57,7 +58,11 @@ bool TileManager::LoadLevel(const std::string& filename)
 				case eTileType::e_Wall:
 					row.emplace_back(tileType, tilePosition, true);
 					break;
-
+				case eTileType::e_Coin:
+				case eTileType::e_PowerUp:
+					m_pickupLocations.emplace_back(tilePosition, tileType);
+					row.emplace_back(eTileType::e_Air, tilePosition, false);
+					break;
 				case eTileType::e_Air:
 					row.emplace_back(tileType, tilePosition, false);
 					break;
@@ -104,8 +109,8 @@ void TileManager::Render(sf::RenderWindow& window)
 
 void TileManager::CheckEntityLevelCollisions(Entity& entity)
 {
-	if (helpers::is_in_range(entity.GetPosition().x, 0, constants::k_screenSize) &&
-		helpers::is_in_range(entity.GetPosition().y, 0, constants::k_screenSize))
+	if (helpers::is_in_range(entity.GetPosition().x, 0, constants::k_screenSize - constants::k_gridCellSize) &&
+		helpers::is_in_range(entity.GetPosition().y, 0, constants::k_screenSize - constants::k_gridCellSize))
 	{
 		const int entityX = entity.GetPosition().x / constants::k_gridCellSize;
 		const int entityY = entity.GetPosition().y / constants::k_gridCellSize;
@@ -166,4 +171,9 @@ void TileManager::CheckEntityLevelCollisions(Entity& entity)
 			break;
 		}
 	}
+}
+
+const std::vector<std::pair<sf::Vector2i, eTileType>>& TileManager::GetPickUpLocations() const
+{
+	return m_pickupLocations;
 }

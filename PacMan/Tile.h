@@ -4,7 +4,9 @@
 enum class eTileType
 {
 	e_Air = -1,
-	e_Wall = 0
+	e_Wall = 0,
+	e_Coin = 1,
+	e_PowerUp = 2
 };
 
 struct Tile

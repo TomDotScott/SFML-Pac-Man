@@ -10,12 +10,16 @@ class TileManager
 {
 public:
 	TileManager() = default;
+
 	bool LoadLevel(const std::string& filename);
 
 	void Render(sf::RenderWindow& window);
 
 	void CheckEntityLevelCollisions(Entity& entity);
 
+	const std::vector<std::pair<sf::Vector2i, eTileType>>& GetPickUpLocations() const;
+
 private:
 	std::vector<std::vector<Tile>> m_levelData;
+	std::vector<std::pair<sf::Vector2i, eTileType>> m_pickupLocations;
 };

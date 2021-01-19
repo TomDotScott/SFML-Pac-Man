@@ -38,9 +38,13 @@ public:
 	sf::Vector2i GetPosition() const;
 	void SetPosition(const sf::Vector2i position);
 
+	void AddPoints(int amount);
+
 private:
 	int m_speed;
 	sf::Vector2i m_position;
 	eDirection m_currentDirection;
 	sf::RectangleShape m_shape;
+
+	int m_points;
 };

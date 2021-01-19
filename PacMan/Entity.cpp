@@ -5,11 +5,12 @@
 Entity::Entity() :
 	m_speed(constants::k_gridCellSize),
 	m_position(
-		constants::k_screenSize / 2 + 3 * constants::k_gridCellSize,
-		constants::k_screenSize / 2 - 3 * constants::k_gridCellSize
+		constants::k_gridCellSize,
+		2 * constants::k_gridCellSize
 		),
 	m_currentDirection(eDirection::e_Up),
-	m_shape({constants::k_gridCellSize, constants::k_gridCellSize})
+	m_shape({constants::k_gridCellSize, constants::k_gridCellSize}),
+m_points(0)
 {
 	m_shape.setFillColor(sf::Color::Yellow);
 }
@@ -95,4 +96,10 @@ sf::Vector2i Entity::GetPosition() const
 void Entity::SetPosition(const sf::Vector2i position)
 {
 	m_position = position;
+}
+
+void Entity::AddPoints(const int amount)
+{
+	m_points += amount;
+	std::cout << m_points << std::endl;
 }
