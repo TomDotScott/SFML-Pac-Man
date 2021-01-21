@@ -141,7 +141,9 @@
   <ItemGroup>
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Ghost.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PacMan.cpp" />
     <ClCompile Include="PickUp.cpp" />
     <ClCompile Include="TileManager.cpp" />
   </ItemGroup>
@@ -149,7 +151,9 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Ghost.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="PacMan.h" />
     <ClInclude Include="PickUp.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="TileManager.h" />

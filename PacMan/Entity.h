@@ -2,6 +2,8 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 
+#include "Tile.h"
+
 enum class eDirection
 {
 	e_None,
@@ -27,24 +29,27 @@ inline const char* to_string(eDirection e)
 class Entity
 {
 public:
-	Entity();
-	void Update();
-	void Render(sf::RenderWindow& window);
-
 	void SetDirection(eDirection direction);
-	
 	eDirection GetDirection() const;
 
 	sf::Vector2i GetPosition() const;
 	void SetPosition(const sf::Vector2i position);
 
-	void AddPoints(int amount);
+protected:
+	sf::Vector2i m_position;
+	int m_speed;
+	eDirection m_currentDirection;
+	std::vector<eDirection> m_limitedDirections;
+	sf::RectangleShape m_shape;
+	sf::Clock m_clock;
+
+
+	Entity(sf::Vector2i position, int speed, eDirection startingDirection);
+
+	void Move();
+	void CheckForBlockades(const std::vector<std::vector<Tile>>& tiles);
 
 private:
-	int m_speed;
-	sf::Vector2i m_position;
-	eDirection m_currentDirection;
-	sf::RectangleShape m_shape;
 
-	int m_points;
+	void WrapAround();	
 };

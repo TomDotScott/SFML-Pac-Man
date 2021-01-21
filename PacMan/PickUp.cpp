@@ -33,8 +33,8 @@ void PickUp::Render(sf::RenderWindow& window) const
 
 	circle.setPosition(
 		{
-			static_cast<float>(m_position.x + constants::k_gridCellSize / 2),
-			static_cast<float>(m_position.y + constants::k_gridCellSize / 2)
+			static_cast<float>(m_position.x) + static_cast<float>(constants::k_gridCellSize) / 2.f,
+			static_cast<float>(m_position.y) + static_cast<float>(constants::k_gridCellSize) / 2.f
 		}
 	);
 	window.draw(circle);
@@ -47,7 +47,7 @@ void PickUp::Initialise(const sf::Vector2i position, const ePickUpType type)
 	m_visible = true;
 }
 
-void PickUp::CheckPacManCollisions(Entity& pacman)
+void PickUp::CheckPacManCollisions(PacMan& pacman)
 {
 	if (m_position == pacman.GetPosition())
 	{
@@ -58,6 +58,7 @@ void PickUp::CheckPacManCollisions(Entity& pacman)
 			break;
 		case ePickUpType::e_PowerUp:
 			pacman.AddPoints(500);
+			pacman.PowerUp();
 			break;
 		default:;
 		}

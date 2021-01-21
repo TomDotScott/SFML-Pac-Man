@@ -2,47 +2,15 @@
 #include "Constants.h"
 #include <iostream>
 
-Entity::Entity() :
-	m_speed(constants::k_gridCellSize),
-	m_position(
-		constants::k_gridCellSize,
-		2 * constants::k_gridCellSize
-		),
-	m_currentDirection(eDirection::e_Up),
-	m_shape({constants::k_gridCellSize, constants::k_gridCellSize}),
-m_points(0)
-{
-	m_shape.setFillColor(sf::Color::Yellow);
-}
+#include "Helpers.h"
 
-void Entity::Update()
+Entity::Entity(const sf::Vector2i position, const int speed, const eDirection startingDirection) :
+	m_position(position),
+	m_speed(speed),
+	m_currentDirection(startingDirection),
+	m_shape({ constants::k_gridCellSize, constants::k_gridCellSize }),
+	m_clock()
 {
-	switch (m_currentDirection)
-	{
-	case eDirection::e_Up:
-		m_position.y -= m_speed;
-		break;
-	case eDirection::e_Down:
-		m_position.y += m_speed;
-		break;
-	case eDirection::e_Left:
-		m_position.x -= m_speed;
-		break;
-	case eDirection::e_Right:
-		m_position.x += m_speed;
-		break;
-	case eDirection::e_None:
-		break;
-	default:
-		std::cout << "Unknown Movement direction" << std::endl;
-		break;
-	}
-}
-
-void Entity::Render(sf::RenderWindow& window)
-{
-	m_shape.setPosition(static_cast<sf::Vector2f>(m_position));
-	window.draw(m_shape);
 }
 
 void Entity::SetDirection(const eDirection direction)
@@ -98,8 +66,100 @@ void Entity::SetPosition(const sf::Vector2i position)
 	m_position = position;
 }
 
-void Entity::AddPoints(const int amount)
+void Entity::Move()
 {
-	m_points += amount;
-	std::cout << m_points << std::endl;
+	if (!helpers::is_in_vector(m_limitedDirections, m_currentDirection))
+	{
+		switch (m_currentDirection)
+		{
+		case eDirection::e_Up:
+			m_position.y -= m_speed;
+			break;
+		case eDirection::e_Down:
+			m_position.y += m_speed;
+			break;
+		case eDirection::e_Left:
+			m_position.x -= m_speed;
+			break;
+		case eDirection::e_Right:
+			m_position.x += m_speed;
+			break;
+		case eDirection::e_None:
+			break;
+		default:
+			std::cout << "Unknown Movement direction" << std::endl;
+			break;
+		}
+		WrapAround();
+	}
+	m_limitedDirections.clear();
+}
+
+void Entity::CheckForBlockades(const std::vector<std::vector<Tile>>& tiles)
+{
+	if (helpers::is_in_range(m_position.x, 0, constants::k_screenSize - constants::k_gridCellSize) &&
+		helpers::is_in_range(m_position.y, 0, constants::k_screenSize - constants::k_gridCellSize))
+	{
+		const int entityX = m_position.x / constants::k_gridCellSize;
+		const int entityY = m_position.y / constants::k_gridCellSize;
+
+		{
+			const auto& currentTile = tiles[entityY - 1][entityX];
+			if (currentTile.m_canCollide)
+			{
+				if (m_position.y <= currentTile.m_position.y + constants::k_gridCellSize)
+				{
+					m_position = { m_position.x, currentTile.m_position.y + constants::k_gridCellSize };
+					m_limitedDirections.push_back(eDirection::e_Up);
+				}
+			}
+		}
+
+		{
+			const auto& currentTile = tiles[entityY + 1][entityX];
+			if (currentTile.m_canCollide)
+			{
+				if (m_position.y >= currentTile.m_position.y - constants::k_gridCellSize)
+				{
+					m_position = { m_position.x, currentTile.m_position.y - constants::k_gridCellSize };
+					m_limitedDirections.push_back(eDirection::e_Down);
+				}
+			}
+		}
+
+		{
+			const auto& currentTile = tiles[entityY][entityX - 1];
+			if (currentTile.m_canCollide)
+			{
+				if (m_position.x >= currentTile.m_position.x + constants::k_gridCellSize)
+				{
+					m_position = { currentTile.m_position.x + constants::k_gridCellSize, m_position.y };
+					m_limitedDirections.push_back(eDirection::e_Left);
+				}
+			}
+		}
+
+		{
+			const auto& currentTile = tiles[entityY][entityX + 1];
+			if (currentTile.m_canCollide)
+			{
+				if (m_position.x <= currentTile.m_position.x - constants::k_gridCellSize)
+				{
+					m_position = { currentTile.m_position.x - constants::k_gridCellSize, m_position.y };
+					m_limitedDirections.push_back(eDirection::e_Right);
+				}
+			}
+		}
+	}
+}
+
+void Entity::WrapAround()
+{
+	if (m_position.x < 0)
+	{
+		m_position.x = constants::k_screenSize + m_position.x;
+	} else if (m_position.x > constants::k_screenSize - constants::k_gridCellSize)
+	{
+		m_position.x = constants::k_screenSize - m_position.x;
+	}
 }

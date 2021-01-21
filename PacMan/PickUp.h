@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <SFML/System/Vector2.hpp>
-
-#include "Entity.h"
+#include "PacMan.h"
 
 enum class ePickUpType
 {
@@ -22,7 +21,7 @@ public:
 
 	bool Visible() const;
 
-	void CheckPacManCollisions(Entity& pacman);
+	void CheckPacManCollisions(PacMan& pacman);
 
 private:
 	sf::Vector2i m_position;

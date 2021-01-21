@@ -2,6 +2,8 @@
 #include <iostream>
 #include <SFML/Window/Keyboard.hpp>
 
+#include "Constants.h"
+
 Game::Game() :
 	m_pacMan()
 {
@@ -15,6 +17,11 @@ Game::Game() :
 		m_pickups.emplace_back();
 		m_pickups.back().Initialise(pickup.first, static_cast<ePickUpType>(pickup.second));
 	}
+
+	// m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2), eGhostType::e_Blinky, m_pacMan);
+	m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2 + constants::k_gridCellSize), eGhostType::e_Pinky, m_pacMan);
+	// m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2), eGhostType::e_Inky, m_pacMan);
+	m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2 - 5 * constants::k_gridCellSize), eGhostType::e_Clyde, m_pacMan);
 }
 
 void Game::Input()
@@ -39,9 +46,13 @@ void Game::Input()
 
 void Game::Update()
 {
-	m_tileManager.CheckEntityLevelCollisions(m_pacMan);
-	m_pacMan.Update();
+	m_pacMan.Update(m_tileManager.GetLevelData());
 
+	for(auto& ghost : m_ghosts)
+	{
+		ghost.Update(m_tileManager.GetLevelData());
+	}
+	
 	for (auto& pickup : m_pickups)
 	{
 		if(pickup.Visible())
@@ -64,4 +75,9 @@ void Game::Render(sf::RenderWindow& window)
 	}
 	
 	m_pacMan.Render(window);
+
+	for (auto& ghost : m_ghosts)
+	{
+		ghost.Render(window);
+	}
 }

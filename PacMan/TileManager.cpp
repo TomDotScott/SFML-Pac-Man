@@ -107,73 +107,12 @@ void TileManager::Render(sf::RenderWindow& window)
 	}
 }
 
-void TileManager::CheckEntityLevelCollisions(Entity& entity)
-{
-	if (helpers::is_in_range(entity.GetPosition().x, 0, constants::k_screenSize - constants::k_gridCellSize) &&
-		helpers::is_in_range(entity.GetPosition().y, 0, constants::k_screenSize - constants::k_gridCellSize))
-	{
-		const int entityX = entity.GetPosition().x / constants::k_gridCellSize;
-		const int entityY = entity.GetPosition().y / constants::k_gridCellSize;
-		// Check collisions in the direction the entity is facing
-		switch (entity.GetDirection())
-		{
-		case eDirection::e_None:
-			break;
-		case eDirection::e_Up:
-		{
-			const auto& currentTile = m_levelData[entityY - 1][entityX];
-			if (currentTile.m_canCollide)
-			{
-				if (entity.GetPosition().y <= currentTile.m_position.y + constants::k_gridCellSize)
-				{
-					entity.SetPosition({ entity.GetPosition().x, currentTile.m_position.y + constants::k_gridCellSize });
-					entity.SetDirection(eDirection::e_None);
-				}
-			}
-		}
-		break;
-		case eDirection::e_Down:
-		{
-			const auto& currentTile = m_levelData[entityY + 1][entityX];
-			if (currentTile.m_canCollide)
-			{
-				if (entity.GetPosition().y >= currentTile.m_position.y - constants::k_gridCellSize)
-				{
-					entity.SetPosition({ entity.GetPosition().x, currentTile.m_position.y - constants::k_gridCellSize });
-					entity.SetDirection(eDirection::e_None);
-				}
-			}
-		}
-		break;
-		case eDirection::e_Left:
-		{
-			const auto& currentTile = m_levelData[entityY][entityX - 1];
-			if (currentTile.m_canCollide)
-			{
-				if (entity.GetPosition().x >= currentTile.m_position.x + constants::k_gridCellSize)
-				{
-					entity.SetPosition({ currentTile.m_position.x + constants::k_gridCellSize, entity.GetPosition().y });
-					entity.SetDirection(eDirection::e_None);
-				}
-			}
-		}
-		break;
-		case eDirection::e_Right:
-			const auto& currentTile = m_levelData[entityY][entityX + 1];
-			if (currentTile.m_canCollide)
-			{
-				if (entity.GetPosition().x <= currentTile.m_position.x - constants::k_gridCellSize)
-				{
-					entity.SetPosition({ currentTile.m_position.x - constants::k_gridCellSize, entity.GetPosition().y });
-					entity.SetDirection(eDirection::e_None);
-				}
-			}
-			break;
-		}
-	}
-}
-
 const std::vector<std::pair<sf::Vector2i, eTileType>>& TileManager::GetPickUpLocations() const
 {
 	return m_pickupLocations;
+}
+
+const std::vector<std::vector<Tile>>& TileManager::GetLevelData() const
+{
+	return m_levelData;
 }
