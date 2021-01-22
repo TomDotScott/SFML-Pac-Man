@@ -23,5 +23,7 @@ private:
 	int m_points;
 	ePacManState m_state;
 	float m_powerUpTimer;
+
+	void Move();
 };
 

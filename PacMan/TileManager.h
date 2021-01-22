@@ -16,7 +16,7 @@ public:
 	void Render(sf::RenderWindow& window);
 
 	const std::vector<std::pair<sf::Vector2i, eTileType>>& GetPickUpLocations() const;
-	const std::vector<std::vector<Tile>>& GetLevelData() const;
+	std::vector<std::vector<Tile>>& GetLevelData();
 private:
 	std::vector<std::vector<Tile>> m_levelData;
 	std::vector<std::pair<sf::Vector2i, eTileType>> m_pickupLocations;

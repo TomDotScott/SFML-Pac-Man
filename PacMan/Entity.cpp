@@ -4,11 +4,12 @@
 
 #include "Helpers.h"
 
-Entity::Entity(const sf::Vector2i position, const int speed, const eDirection startingDirection) :
+Entity::Entity(const sf::Vector2i position, const int speed, const eDirection startingDirection, sf::Color colour) :
 	m_position(position),
 	m_speed(speed),
 	m_currentDirection(startingDirection),
 	m_shape({ constants::k_gridCellSize, constants::k_gridCellSize }),
+	m_colour(colour),
 	m_clock()
 {
 }
@@ -64,35 +65,6 @@ sf::Vector2i Entity::GetPosition() const
 void Entity::SetPosition(const sf::Vector2i position)
 {
 	m_position = position;
-}
-
-void Entity::Move()
-{
-	if (!helpers::is_in_vector(m_limitedDirections, m_currentDirection))
-	{
-		switch (m_currentDirection)
-		{
-		case eDirection::e_Up:
-			m_position.y -= m_speed;
-			break;
-		case eDirection::e_Down:
-			m_position.y += m_speed;
-			break;
-		case eDirection::e_Left:
-			m_position.x -= m_speed;
-			break;
-		case eDirection::e_Right:
-			m_position.x += m_speed;
-			break;
-		case eDirection::e_None:
-			break;
-		default:
-			std::cout << "Unknown Movement direction" << std::endl;
-			break;
-		}
-		WrapAround();
-	}
-	m_limitedDirections.clear();
 }
 
 void Entity::CheckForBlockades(const std::vector<std::vector<Tile>>& tiles)

@@ -41,15 +41,15 @@ protected:
 	eDirection m_currentDirection;
 	std::vector<eDirection> m_limitedDirections;
 	sf::RectangleShape m_shape;
+	sf::Color m_colour;
 	sf::Clock m_clock;
 
 
-	Entity(sf::Vector2i position, int speed, eDirection startingDirection);
+	Entity(sf::Vector2i position, int speed, eDirection startingDirection, sf::Color colour);
 
-	void Move();
+	void WrapAround();
 	void CheckForBlockades(const std::vector<std::vector<Tile>>& tiles);
 
 private:
 
-	void WrapAround();	
 };

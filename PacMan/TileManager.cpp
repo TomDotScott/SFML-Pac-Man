@@ -61,9 +61,9 @@ bool TileManager::LoadLevel(const std::string& filename)
 				case eTileType::e_Coin:
 				case eTileType::e_PowerUp:
 					m_pickupLocations.emplace_back(tilePosition, tileType);
-					row.emplace_back(eTileType::e_Air, tilePosition, false);
+					row.emplace_back(eTileType::e_Path, tilePosition, false);
 					break;
-				case eTileType::e_Air:
+				case eTileType::e_Path:
 					row.emplace_back(tileType, tilePosition, false);
 					break;
 				}
@@ -90,7 +90,7 @@ void TileManager::Render(sf::RenderWindow& window)
 		{
 			switch (currentTile.m_type)
 			{
-			case eTileType::e_Air:
+			case eTileType::e_Path:
 				rec.setFillColor({ 128, 128, 128 });
 				break;
 			case eTileType::e_Wall:
@@ -112,7 +112,7 @@ const std::vector<std::pair<sf::Vector2i, eTileType>>& TileManager::GetPickUpLoc
 	return m_pickupLocations;
 }
 
-const std::vector<std::vector<Tile>>& TileManager::GetLevelData() const
+std::vector<std::vector<Tile>>& TileManager::GetLevelData()
 {
 	return m_levelData;
 }

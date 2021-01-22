@@ -18,10 +18,37 @@ Game::Game() :
 		m_pickups.back().Initialise(pickup.first, static_cast<ePickUpType>(pickup.second));
 	}
 
-	// m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2), eGhostType::e_Blinky, m_pacMan);
-	m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2 + constants::k_gridCellSize), eGhostType::e_Pinky, m_pacMan);
+	m_ghosts.emplace_back(
+		sf::Vector2i(
+			constants::k_screenSize - 2 * constants::k_gridCellSize, 
+			3 * constants::k_gridCellSize
+		), 
+		eGhostType::e_Blinky, 
+		sf::Color::Red, 
+		m_pacMan
+	);
+	
+	m_ghosts.emplace_back(
+		sf::Vector2i(
+			constants::k_screenSize / 2, 
+			constants::k_screenSize / 2 + constants::k_gridCellSize
+		), 
+		eGhostType::e_Pinky, 
+		sf::Color::Magenta, 
+		m_pacMan
+	);
+	
 	// m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2), eGhostType::e_Inky, m_pacMan);
-	m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2 - 5 * constants::k_gridCellSize), eGhostType::e_Clyde, m_pacMan);
+
+	m_ghosts.emplace_back(
+		sf::Vector2i(
+			constants::k_screenSize / 2, 
+			constants::k_screenSize / 2 - 5 * constants::k_gridCellSize
+		), 
+		eGhostType::e_Clyde,
+		sf::Color(255, 165, 0),
+		m_pacMan
+	);
 }
 
 void Game::Input()

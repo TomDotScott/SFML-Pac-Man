@@ -1,6 +1,8 @@
 #pragma once
 #include "Entity.h"
 #include "PacMan.h"
+#include <list>
+#include <stack>
 
 enum class eGhostType
 {
@@ -21,15 +23,29 @@ enum class eGhostState
 class Ghost final : public Entity
 {
 public:
-	explicit Ghost(sf::Vector2i position, eGhostType type, const PacMan& pacMan);
-	void Update(const std::vector<std::vector<Tile>>& tiles);
+	explicit Ghost(sf::Vector2i position, eGhostType type, sf::Color colour, const PacMan& pacMan);
+	void Update(std::vector<std::vector<Tile>>& tiles);
 	void Render(sf::RenderWindow& window);
 
 private:
 	const PacMan& m_pacMan;
 	eGhostType m_type;
 	eGhostState m_state;
-	
-	void PathFind(const std::vector<std::vector<Tile>>& tiles);
+
+	// The path-finding will be updated every 10 game ticks (once per second)
+	int m_updateTicks;
+
+	std::stack<Tile*> m_path;
+	std::vector<Tile*> m_openList;
+	std::vector<Tile*> m_closedList;
+
+	Tile* GetLowestFCostNode(std::vector<Tile*>& list);
+	int CalculateDistanceCost(Tile* a, Tile* b) const;
+	void CalculatePath(Tile* endNode);
+	std::vector<Tile*> GetNeighbourNodes(std::vector<std::vector<Tile>>& tiles, Tile* currentNode);
+	void AStarPathFinding(std::vector<std::vector<Tile>>& tiles, sf::Vector2i startPosition, sf::Vector2i endPosition);
+	void Move(std::vector<std::vector<Tile>>& tiles);
+	void UpdatePathFinding(std::vector<std::vector<Tile>>& tiles);
+	void ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles);
 };
 

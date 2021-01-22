@@ -36,6 +36,17 @@ namespace helpers
 
 	inline int rand_range(const int min, const int max)
 	{
+		static bool first = true;
+		if(first)
+		{
+			srand(static_cast<unsigned>(time(nullptr)));
+			first = false;
+		}
 		return min + (rand() % (max - min + 1));
+	}
+
+	constexpr inline int world_coord_to_array_index(const int worldCoord)
+	{
+		return worldCoord / constants::k_gridCellSize;
 	}
 }
