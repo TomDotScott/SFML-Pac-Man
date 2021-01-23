@@ -37,6 +37,8 @@ void PacMan::Update(const std::vector<std::vector<Tile>>& tiles)
 		}
 	}
 	m_clock.restart();
+
+	std::cout << m_position.x << " " << m_position.y << std::endl;
 }
 
 void PacMan::Render(sf::RenderWindow& window)
@@ -45,6 +47,11 @@ void PacMan::Render(sf::RenderWindow& window)
 
 	m_shape.setPosition(static_cast<sf::Vector2f>(m_position));
 	window.draw(m_shape);
+}
+
+const ePacManState& PacMan::GetPacManState() const
+{
+	return m_state;
 }
 
 void PacMan::PowerUp()

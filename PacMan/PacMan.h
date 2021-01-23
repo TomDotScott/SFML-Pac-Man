@@ -15,6 +15,8 @@ public:
 	void Update(const std::vector<std::vector<Tile>>& tiles);
 
 	void Render(sf::RenderWindow& window);
+
+	const ePacManState& GetPacManState() const;
 	
 	void PowerUp();
 	void AddPoints(int amount);

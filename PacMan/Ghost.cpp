@@ -6,7 +6,7 @@
 #include "Constants.h"
 #include "Helpers.h"
 
-Ghost::Ghost(const sf::Vector2i position, const eGhostType type, sf::Color colour, const PacMan& pacMan) :
+Ghost::Ghost(const sf::Vector2i position, const eGhostType type, const sf::Color colour, const PacMan& pacMan) :
 	Entity(position,
 		constants::k_gridCellSize,
 		eDirection::e_None,
@@ -14,8 +14,15 @@ Ghost::Ghost(const sf::Vector2i position, const eGhostType type, sf::Color colou
 	m_pacMan(pacMan),
 	m_type(type),
 	m_state(eGhostState::e_Chase),
-	m_updateTicks(0)
+	m_updateTicks(0),
+	m_currentCorner(0)
 {
+	// define the corners of the map for patrolling
+	// and scattering
+	m_cornerPositions[0] = { constants::k_gridCellSize, 2 * constants::k_gridCellSize };
+	m_cornerPositions[1] = { 30 * constants::k_gridCellSize, 2 * constants::k_gridCellSize };
+	m_cornerPositions[2] = { 30 * constants::k_gridCellSize, 29 * constants::k_gridCellSize };
+	m_cornerPositions[3] = { constants::k_gridCellSize, 29 * constants::k_gridCellSize };
 }
 
 void Ghost::Update(std::vector<std::vector<Tile>>& tiles)
@@ -36,7 +43,7 @@ void Ghost::Render(sf::RenderWindow& window)
 		auto* node = temp.top();
 		temp.pop();
 
-		m_shape.setFillColor({m_colour.r, m_colour.g, m_colour.b, 80});
+		m_shape.setFillColor({ m_colour.r, m_colour.g, m_colour.b, 80 });
 		m_shape.setPosition(static_cast<sf::Vector2f>(node->m_position));
 		window.draw(m_shape);
 	}
@@ -46,6 +53,11 @@ void Ghost::Render(sf::RenderWindow& window)
 	m_shape.setPosition(static_cast<sf::Vector2f>(m_position));
 
 	window.draw(m_shape);
+}
+
+void Ghost::SetGhostState(const eGhostState state)
+{
+	m_state = state;
 }
 
 Tile* Ghost::GetLowestFCostNode(std::vector<Tile*>& list)
@@ -96,6 +108,12 @@ void Ghost::CalculatePath(Tile* endNode)
 	{
 		m_path.push(currentNode->m_cameFromNode);
 		currentNode = currentNode->m_cameFromNode;
+	}
+
+	if (m_path.empty())
+	{
+		std::cout << "No path to X: " << endNode->m_position.x
+			<< " Y : " << endNode->m_position.y << " found" << std::endl;
 	}
 }
 
@@ -249,30 +267,7 @@ void Ghost::Move(std::vector<std::vector<Tile>>& tiles)
 		m_path.pop();
 
 		m_position = destination->m_position;
-	} /*else
-	{
-
-		switch (m_currentDirection)
-		{
-		case eDirection::e_Up:
-			m_position.y -= m_speed;
-			break;
-		case eDirection::e_Down:
-			m_position.y += m_speed;
-			break;
-		case eDirection::e_Left:
-			m_position.x -= m_speed;
-			break;
-		case eDirection::e_Right:
-			m_position.x += m_speed;
-			break;
-		case eDirection::e_None:
-			break;
-		default:
-			std::cout << "Unknown Movement direction" << std::endl;
-			break;
-		}
-	}*/
+	}
 }
 
 void Ghost::UpdatePathFinding(std::vector<std::vector<Tile>>& tiles)
@@ -289,23 +284,7 @@ void Ghost::UpdatePathFinding(std::vector<std::vector<Tile>>& tiles)
 		ChaseModePathFinding(tiles);
 		break;
 	case eGhostState::e_Scatter:
-		// TODO: Break away from PacMan and head to the corners
-		switch (m_type)
-		{
-		case eGhostType::e_Blinky:
-			// Top Right
-			break;
-		case eGhostType::e_Pinky:
-			// Top Left
-			break;
-		case eGhostType::e_Inky:
-			// Bottom Right
-			break;
-		case eGhostType::e_Clyde:
-			// Bottom Left
-			break;
-		default:;
-		}
+		ScatterModePathFinding(tiles);
 		break;
 	case eGhostState::e_Frightened:
 		// TODO: Run away from PacMan, move wherever is furthest away
@@ -319,7 +298,7 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 	switch (m_type)
 	{
 	case eGhostType::e_Blinky:
-		// TODO: Chase pacman and try to get behind him
+		// Chase pacman and try to get behind him
 	{
 		const eDirection pacManDirection = m_pacMan.GetDirection();
 
@@ -396,7 +375,7 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 
 	case eGhostType::e_Pinky:
 	{
-		// TODO: Chase pacman and try to get in front of him
+		// Chase pacman and try to get in front of him
 		{
 			const eDirection pacManDirection = m_pacMan.GetDirection();
 
@@ -471,11 +450,25 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 	}
 	break;
 	case eGhostType::e_Inky:
-		// TODO: Patrol an area
+		// Patrol an area
+		if (m_path.empty())
+		{
+			m_currentCorner++;
+
+			if (m_currentCorner > 3)
+			{
+				m_currentCorner = 0;
+				//std::cout << "Resetting to the top left: " << std::endl;
+			}
+
+			//std::cout << "Moving toward X : " << m_cornerPositions[m_currentCorner].x << " Y : " << m_cornerPositions[m_currentCorner].y << std::endl;
+
+			AStarPathFinding(tiles, m_position, m_cornerPositions[m_currentCorner]);
+		}
+
 		break;
 	case eGhostType::e_Clyde:
-		// TODO: Move to a random position
-
+		// Move to a random position
 		if (m_path.empty())
 		{
 			Tile& randomTile = tiles[1][1];
@@ -490,4 +483,9 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 		break;
 	default:;
 	}
+}
+
+void Ghost::ScatterModePathFinding(std::vector<std::vector<Tile>>& tiles)
+{
+	AStarPathFinding(tiles, m_position, m_cornerPositions[static_cast<int>(m_type)]);
 }

@@ -8,7 +8,8 @@ enum class eTileType
 	e_Path = -1,
 	e_Wall = 0,
 	e_Coin = 1,
-	e_PowerUp = 2
+	e_PowerUp = 2,
+	e_WrapAroundPath = 3
 };
 
 struct Tile

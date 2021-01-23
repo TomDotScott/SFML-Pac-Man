@@ -63,6 +63,7 @@ bool TileManager::LoadLevel(const std::string& filename)
 					m_pickupLocations.emplace_back(tilePosition, tileType);
 					row.emplace_back(eTileType::e_Path, tilePosition, false);
 					break;
+				case eTileType::e_WrapAroundPath:
 				case eTileType::e_Path:
 					row.emplace_back(tileType, tilePosition, false);
 					break;
@@ -91,6 +92,7 @@ void TileManager::Render(sf::RenderWindow& window)
 			switch (currentTile.m_type)
 			{
 			case eTileType::e_Path:
+			case eTileType::e_WrapAroundPath:
 				rec.setFillColor({ 128, 128, 128 });
 				break;
 			case eTileType::e_Wall:

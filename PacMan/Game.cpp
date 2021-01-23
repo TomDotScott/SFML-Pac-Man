@@ -38,7 +38,15 @@ Game::Game() :
 		m_pacMan
 	);
 	
-	// m_ghosts.emplace_back(sf::Vector2i(constants::k_screenSize / 2, constants::k_screenSize / 2), eGhostType::e_Inky, m_pacMan);
+	m_ghosts.emplace_back(
+		sf::Vector2i(
+			constants::k_screenSize / 2, 
+			constants::k_screenSize / 2
+		), 
+		eGhostType::e_Inky,
+		sf::Color::Cyan,
+		m_pacMan
+	);
 
 	m_ghosts.emplace_back(
 		sf::Vector2i(
@@ -75,17 +83,27 @@ void Game::Update()
 {
 	m_pacMan.Update(m_tileManager.GetLevelData());
 
-	for(auto& ghost : m_ghosts)
-	{
-		ghost.Update(m_tileManager.GetLevelData());
-	}
-	
 	for (auto& pickup : m_pickups)
 	{
-		if(pickup.Visible())
+		if (pickup.Visible())
 		{
 			pickup.CheckPacManCollisions(m_pacMan);
 		}
+	}
+	
+	for(auto& ghost : m_ghosts)
+	{
+		switch (m_pacMan.GetPacManState())
+		{
+			case ePacManState::e_Normal: 
+				ghost.SetGhostState(eGhostState::e_Chase);
+				break;
+			case ePacManState::e_PowerUp: 
+				ghost.SetGhostState(eGhostState::e_Scatter);
+				break;
+			default: ;
+		}
+		ghost.Update(m_tileManager.GetLevelData());
 	}
 }
 

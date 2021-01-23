@@ -47,6 +47,9 @@ namespace helpers
 
 	constexpr inline int world_coord_to_array_index(const int worldCoord)
 	{
-		return worldCoord / constants::k_gridCellSize;
+		const int index = worldCoord / constants::k_gridCellSize;
+		if(index < 0) return 0;
+		if(index > constants::k_gridSize - 1) return constants::k_gridSize - 1;
+		return index;
 	}
 }

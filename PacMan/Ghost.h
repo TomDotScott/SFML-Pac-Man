@@ -27,6 +27,8 @@ public:
 	void Update(std::vector<std::vector<Tile>>& tiles);
 	void Render(sf::RenderWindow& window);
 
+	void SetGhostState(eGhostState state);
+
 private:
 	const PacMan& m_pacMan;
 	eGhostType m_type;
@@ -34,10 +36,12 @@ private:
 
 	// The path-finding will be updated every 10 game ticks (once per second)
 	int m_updateTicks;
+	int m_currentCorner;
 
 	std::stack<Tile*> m_path;
 	std::vector<Tile*> m_openList;
 	std::vector<Tile*> m_closedList;
+	sf::Vector2i m_cornerPositions[4];
 
 	Tile* GetLowestFCostNode(std::vector<Tile*>& list);
 	int CalculateDistanceCost(Tile* a, Tile* b) const;
@@ -47,5 +51,6 @@ private:
 	void Move(std::vector<std::vector<Tile>>& tiles);
 	void UpdatePathFinding(std::vector<std::vector<Tile>>& tiles);
 	void ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles);
+	void ScatterModePathFinding(std::vector<std::vector<Tile>>& tiles);
 };
 
