@@ -52,6 +52,12 @@ private:
 	void AStarPathFinding(sf::Vector2i startPosition, sf::Vector2i endPosition);
 	void UpdatePathFinding();
 	void ChaseModePathFinding();
+
+	void MoveTowardsBlockAbove(int pacManIndexX, int pacManIndexY);
+	void MoveTowardsBlockBelow(int pacManIndexX, int pacManIndexY);
+	void MoveTowardsBlockLeft(int pacManIndexX, int pacManIndexY);
+	void MoveTowardsBlockRight(int pacManIndexX, int pacManIndexY);
+	
 	void Move();
 	void CheckPacManCollisions();
 

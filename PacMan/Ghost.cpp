@@ -307,6 +307,29 @@ void Ghost::AStarPathFinding(const sf::Vector2i startPosition, const sf::Vector2
 	}
 }
 
+void Ghost::MoveTowardsBlockRight(int pacManIndexX, int pacManIndexY)
+{
+	// If the distance is short, move towards him
+	if (m_pacMan.GetPosition().x - m_position.x < 2 * constants::k_gridCellSize &&
+		m_position.y == m_pacMan.GetPosition().y)
+	{
+		AStarPathFinding(m_position, m_pacMan.GetPosition());
+	} else
+	{
+		// See if the right of PacMan is legal
+		if (helpers::is_in_range(pacManIndexX + 1, 0, static_cast<int>(m_grid.size() - 1)))
+		{
+			if (m_grid[pacManIndexY][pacManIndexX + 1].m_type == eTileType::e_Path)
+			{
+				AStarPathFinding(m_position, m_grid[pacManIndexY][pacManIndexX + 1].m_position);
+			}
+		} else
+		{
+			AStarPathFinding(m_position, m_pacMan.GetPosition());
+		}
+	}
+}
+
 void Ghost::Move()
 {
 	m_updateTicks++;
@@ -365,161 +388,76 @@ void Ghost::UpdatePathFinding()
 
 void Ghost::ChaseModePathFinding()
 {
+	const int pacManIndexX = helpers::world_coord_to_array_index(m_pacMan.GetPosition().x);
+	const int pacManIndexY = helpers::world_coord_to_array_index(m_pacMan.GetPosition().y);
+
 	switch (m_type)
 	{
 	case eGhostType::e_Blinky:
-		// Chase pacman and try to get behind him
-	{
-		const eDirection pacManDirection = m_pacMan.GetDirection();
-
-		const sf::Vector2i pacManPosition = m_pacMan.GetPosition();
-
-		// Grab the First legal tile that is behind pacman
-		switch (pacManDirection)
+		// If the X and Y indices are valid in the array
+		if (helpers::is_in_range(pacManIndexX, 0, static_cast<int>(m_grid[0].size() - 1)) &&
+			helpers::is_in_range(pacManIndexY, 0, static_cast<int>(m_grid.size() - 1)))
 		{
-		case eDirection::e_None:
-			AStarPathFinding(m_position, pacManPosition);
-			break;
-		case eDirection::e_Up:
-			// If the tile directly below is legal, move towards that
-
-			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
-				[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
-			{
-				const sf::Vector2i tileBelowPosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
-					[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
-
-				AStarPathFinding(m_position, tileBelowPosition);
-			} else
-			{
-				AStarPathFinding(m_position, pacManPosition);
-			}
-			break;
-		case eDirection::e_Down:
-			// If the tile directly above is legal, move towards it
-			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
-				[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
-			{
-				const sf::Vector2i tileAbovePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
-					[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
-
-				AStarPathFinding(m_position, tileAbovePosition);
-			} else
-			{
-				AStarPathFinding(m_position, pacManPosition);
-			}
-			break;
-		case eDirection::e_Left:
-			// If the tile directly to the left is legal, move towards it
-			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-				[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_type == eTileType::e_Path)
-			{
-				const sf::Vector2i leftTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-					[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_position;
-
-				AStarPathFinding(m_position, leftTilePosition);
-			} else
-			{
-				AStarPathFinding(m_position, pacManPosition);
-			}
-			break;
-		case eDirection::e_Right:
-			// If the tile directly to the right is legal, move towards it
-			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-				[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_type == eTileType::e_Path)
-			{
-				const sf::Vector2i rightTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-					[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_position;
-
-				AStarPathFinding(m_position, rightTilePosition);
-			} else
-			{
-				AStarPathFinding(m_position, pacManPosition);
-			}break;
-		default:
-			break;
-		}
-	}
-	break;
-
-
-	case eGhostType::e_Pinky:
-	{
-		// Chase pacman and try to get in front of him
-		{
-			const eDirection pacManDirection = m_pacMan.GetDirection();
-
-			const sf::Vector2i pacManPosition = m_pacMan.GetPosition();
-
-			// Grab the First legal tile that is behind pacman
-			switch (pacManDirection)
+			// Chase pacman and try to get behind him
+			switch (m_pacMan.GetDirection())
 			{
 			case eDirection::e_None:
-				AStarPathFinding(m_position, pacManPosition);
-				break;
-			case eDirection::e_Down:
-				// If the tile directly below is legal, move towards that
-
-				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
-					[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
-				{
-					const sf::Vector2i tileBelowPosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
-						[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
-
-					AStarPathFinding(m_position, tileBelowPosition);
-				} else
-				{
-					AStarPathFinding(m_position, pacManPosition);
-				}
+				AStarPathFinding(m_position, m_pacMan.GetPosition());
 				break;
 			case eDirection::e_Up:
-				// If the tile directly above is legal, move towards it
-				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
-					[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
-				{
-					const sf::Vector2i tileAbovePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
-						[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
-
-					AStarPathFinding(m_position, tileAbovePosition);
-				} else
-				{
-					AStarPathFinding(m_position, pacManPosition);
-				}
+				MoveTowardsBlockBelow(pacManIndexX, pacManIndexY);
 				break;
-			case eDirection::e_Right:
-				// If the tile directly to the left is legal, move towards it
-				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-					[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_type == eTileType::e_Path)
-				{
-					const sf::Vector2i leftTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-						[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_position;
-
-					AStarPathFinding(m_position, leftTilePosition);
-				} else
-				{
-					AStarPathFinding(m_position, pacManPosition);
-				}
+			case eDirection::e_Down:
+				MoveTowardsBlockAbove(pacManIndexX, pacManIndexY);
 				break;
 			case eDirection::e_Left:
-				// If the tile directly to the right is legal, move towards it
-				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-					[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_type == eTileType::e_Path)
-				{
-					const sf::Vector2i rightTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
-						[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_position;
-
-					AStarPathFinding(m_position, rightTilePosition);
-				} else
-				{
-					AStarPathFinding(m_position, pacManPosition);
-				}break;
-			default:
+				MoveTowardsBlockRight(pacManIndexX, pacManIndexY);
+				break;
+			case eDirection::e_Right:
+				MoveTowardsBlockLeft(pacManIndexX, pacManIndexY);
 				break;
 			}
+		} else
+		{
+			// if not valid, move to their corner 
+			AStarPathFinding(
+				m_position,
+				constants::k_cornerPositions[static_cast<int>(m_type)]
+			);
 		}
-	}
-	break;
-
+		break;
+	case eGhostType::e_Pinky:
+		if (helpers::is_in_range(pacManIndexX, 0, static_cast<int>(m_grid[0].size() - 1)) &&
+			helpers::is_in_range(pacManIndexY, 0, static_cast<int>(m_grid.size() - 1)))
+		{
+			// Chase pacman and try to get in front of him
+			switch (m_pacMan.GetDirection())
+			{
+			case eDirection::e_None:
+				AStarPathFinding(m_position, m_pacMan.GetPosition());
+				break;
+			case eDirection::e_Up:
+				MoveTowardsBlockAbove(pacManIndexX, pacManIndexY);
+				break;
+			case eDirection::e_Down:
+				MoveTowardsBlockBelow(pacManIndexX, pacManIndexY);
+				break;
+			case eDirection::e_Left:
+				MoveTowardsBlockLeft(pacManIndexX, pacManIndexY);
+				break;
+			case eDirection::e_Right:
+				MoveTowardsBlockRight(pacManIndexX, pacManIndexY);
+				break;
+			}
+		} else
+		{
+			// if not valid, move to their corner 
+			AStarPathFinding(
+				m_position,
+				constants::k_cornerPositions[static_cast<int>(m_type)]
+			);
+		}
+		break;
 
 	case eGhostType::e_Inky:
 		// Patrol an area
@@ -550,3 +488,73 @@ void Ghost::ChaseModePathFinding()
 	default:;
 	}
 }
+
+void Ghost::MoveTowardsBlockAbove(int pacManIndexX, int pacManIndexY)
+{
+	if (m_position.y - m_pacMan.GetPosition().y < 2 * constants::k_gridCellSize &&
+		m_position.x == m_pacMan.GetPosition().x)
+	{
+		AStarPathFinding(m_position, m_pacMan.GetPosition());
+	} else
+	{
+		// See if the block above PacMan is legal
+		if (helpers::is_in_range(pacManIndexY - 1, 0, static_cast<int>(m_grid.size() - 1)))
+		{
+			if (m_grid[pacManIndexY - 1][pacManIndexX].m_type == eTileType::e_Path)
+			{
+				AStarPathFinding(m_position, m_grid[pacManIndexY - 1][pacManIndexX].m_position);
+			}
+		} else
+		{
+			AStarPathFinding(m_position, m_pacMan.GetPosition());
+		}
+	}
+}
+
+
+void Ghost::MoveTowardsBlockBelow(int pacManIndexX, int pacManIndexY)
+{
+	// If the distance is short, move towards him
+	if (m_pacMan.GetPosition().y - m_position.y < 2 * constants::k_gridCellSize &&
+		m_position.x == m_pacMan.GetPosition().x)
+	{
+		AStarPathFinding(m_position, m_pacMan.GetPosition());
+	} else
+	{
+		// See if the block below PacMan is legal
+		if (helpers::is_in_range(pacManIndexY + 1, 0, static_cast<int>(m_grid.size() - 1)))
+		{
+			if (m_grid[pacManIndexY + 1][pacManIndexX].m_type == eTileType::e_Path)
+			{
+				AStarPathFinding(m_position, m_grid[pacManIndexY + 1][pacManIndexX].m_position);
+			}
+		} else
+		{
+			AStarPathFinding(m_position, m_pacMan.GetPosition());
+		}
+	}
+}
+
+void Ghost::MoveTowardsBlockLeft(int pacManIndexX, int pacManIndexY)
+{
+	// If the distance is short, move towards him
+	if (m_position.x - m_pacMan.GetPosition().x < 2 * constants::k_gridCellSize &&
+		m_position.y == m_pacMan.GetPosition().y)
+	{
+		AStarPathFinding(m_position, m_pacMan.GetPosition());
+	} else
+	{
+		// See if the left of PacMan is legal
+		if (helpers::is_in_range(pacManIndexX - 1, 0, static_cast<int>(m_grid.size() - 1)))
+		{
+			if (m_grid[pacManIndexY][pacManIndexX - 1].m_type == eTileType::e_Path)
+			{
+				AStarPathFinding(m_position, m_grid[pacManIndexY][pacManIndexX - 1].m_position);
+			}
+		} else
+		{
+			AStarPathFinding(m_position, m_pacMan.GetPosition());
+		}
+	}
+}
+
