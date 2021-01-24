@@ -6,6 +6,7 @@ namespace constants
 	const int k_gridCellSize = k_screenSize / k_gridSize;
 	const int k_gridMovementCost = 10;
 	const int k_ghostHomeTime = 7;
+	const int k_pacManPowerUpTime = 5;
 
 	const sf::Vector2i k_pacManSpawnPosition = { 375, 375 };
 	

@@ -74,7 +74,7 @@ void Ghost::Render(sf::RenderWindow& window)
 		window.draw(m_shape);
 	}
 
-	if (m_state != eGhostState::e_Frightened)m_shape.setFillColor(m_colour);
+	if (m_state != eGhostState::e_Frightened) m_shape.setFillColor(m_colour);
 	else
 	{
 		const sf::Color frightenedColour = { 0, 19, 142 };
@@ -82,7 +82,6 @@ void Ghost::Render(sf::RenderWindow& window)
 		{
 			// Blend from blue to the normal ghost colour
 			const float normalisedTimer = m_homeTimer / static_cast<float>(constants::k_ghostHomeTime);
-
 
 			const sf::Uint32 lerpedColour = helpers::interpolate(frightenedColour.toInteger(), m_colour.toInteger(), normalisedTimer);
 

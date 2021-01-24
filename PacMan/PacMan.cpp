@@ -29,7 +29,7 @@ void PacMan::Update(const std::vector<std::vector<Tile>>& tiles)
 	{
 		m_powerUpTimer += static_cast<float>(m_clock.getElapsedTime().asSeconds());
 
-		if (m_powerUpTimer >= 5.f)
+		if (m_powerUpTimer >= constants::k_pacManPowerUpTime)
 		{
 			m_state = ePacManState::e_Normal;
 			m_powerUpTimer = 0.f;
@@ -40,7 +40,19 @@ void PacMan::Update(const std::vector<std::vector<Tile>>& tiles)
 
 void PacMan::Render(sf::RenderWindow& window)
 {
-	m_shape.setFillColor(m_state == ePacManState::e_Normal ? sf::Color::Yellow : sf::Color::White);
+	if (m_state == ePacManState::e_PowerUp)
+	{
+		// Interpolate between pacman's colour and the power-up
+		// Colour based on the time
+		const float normalisedTimer = m_powerUpTimer / static_cast<float>(constants::k_pacManPowerUpTime);
+
+		const sf::Uint32 lerpedColour = helpers::interpolate(m_colour.toInteger(), sf::Color::White.toInteger(), normalisedTimer);
+
+		m_shape.setFillColor(sf::Color(lerpedColour));
+	} else
+	{
+		m_shape.setFillColor(sf::Color::Yellow);
+	}
 
 	m_shape.setPosition(static_cast<sf::Vector2f>(m_position));
 	window.draw(m_shape);
