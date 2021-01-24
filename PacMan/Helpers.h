@@ -10,7 +10,7 @@ namespace helpers
 	template<typename T>
 	bool is_in_vector(const std::vector<T>& vec, T val)
 	{
-		for(const auto& v : vec) if (v == val) return true;
+		for (const auto& v : vec) if (v == val) return true;
 		return false;
 	}
 
@@ -37,7 +37,7 @@ namespace helpers
 	inline int rand_range(const int min, const int max)
 	{
 		static bool first = true;
-		if(first)
+		if (first)
 		{
 			srand(static_cast<unsigned>(time(nullptr)));
 			first = false;
@@ -45,11 +45,26 @@ namespace helpers
 		return min + (rand() % (max - min + 1));
 	}
 
-	constexpr inline int world_coord_to_array_index(const int worldCoord)
+	constexpr int world_coord_to_array_index(const int worldCoord)
 	{
 		const int index = worldCoord / constants::k_gridCellSize;
-		if(index < 0) return 0;
-		if(index > constants::k_gridSize - 1) return constants::k_gridSize - 1;
+		if (index < 0) return 0;
+		if (index > constants::k_gridSize - 1) return constants::k_gridSize - 1;
 		return index;
 	}
+
+	constexpr int interpolate(const int color1, const int color2, const float fraction)
+	{
+		const unsigned char r1 = (color1 >> 16) & 0xff;
+		const unsigned char r2 = (color2 >> 16) & 0xff;
+		const unsigned char g1 = (color1 >> 8) & 0xff;
+		const unsigned char g2 = (color2 >> 8) & 0xff;
+		const unsigned char b1 = color1 & 0xff;
+		const unsigned char b2 = color2 & 0xff;
+
+		return static_cast<int>((r2 - r1) * fraction + r1) << 16 |
+			static_cast<int>((g2 - g1) * fraction + g1) << 8 |
+			static_cast<int>((b2 - b1) * fraction + b1);
+	}
+
 }

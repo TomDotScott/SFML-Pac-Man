@@ -145,6 +145,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PacMan.cpp" />
     <ClCompile Include="PickUp.cpp" />
+    <ClCompile Include="Text.cpp" />
     <ClCompile Include="TileManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +156,7 @@
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="PacMan.h" />
     <ClInclude Include="PickUp.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="TileManager.h" />
   </ItemGroup>

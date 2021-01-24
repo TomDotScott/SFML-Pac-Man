@@ -2,18 +2,17 @@
 
 #include <iostream>
 
-
 #include "Constants.h"
 #include "Helpers.h"
 
-Ghost::Ghost(std::vector<std::vector<Tile>>& grid, const sf::Vector2i position, const eGhostType type, const sf::Color colour, PacMan& pacMan) :
-	Entity(position,
+Ghost::Ghost(const eGhostType type, std::vector<std::vector<Tile>>& grid, PacMan& pacMan) :
+	Entity(sf::Vector2i(),
 		constants::k_gridCellSize,
 		eDirection::e_None,
-		colour),
+		sf::Color::White),
 	m_pacMan(pacMan),
 	m_type(type),
-	m_state(eGhostState::e_Frightened),
+	m_state(eGhostState::e_Chase),
 	m_homeTimer(0.f),
 	m_updateTicks(0),
 	m_grid(grid),
@@ -21,23 +20,33 @@ Ghost::Ghost(std::vector<std::vector<Tile>>& grid, const sf::Vector2i position, 
 {
 	// define the corners of the map for patrolling
 	// and scattering
-	m_cornerPositions[0] = { constants::k_gridCellSize, 2 * constants::k_gridCellSize };
-	m_cornerPositions[1] = { 30 * constants::k_gridCellSize, 2 * constants::k_gridCellSize };
-	m_cornerPositions[2] = { 30 * constants::k_gridCellSize, 29 * constants::k_gridCellSize };
-	m_cornerPositions[3] = { constants::k_gridCellSize, 29 * constants::k_gridCellSize };
 
-	m_homePositions[0] = { 350, 375 };
-	m_homePositions[1] = { 375, 375 };
-	m_homePositions[2] = { 400, 375 };
-	m_homePositions[3] = { 425, 375 };
+	switch (m_type)
+	{
+	case eGhostType::e_Blinky:
+		m_colour = sf::Color::Red;
+		break;
+	case eGhostType::e_Pinky:
+		m_colour = sf::Color::Magenta;
+		break;
+	case eGhostType::e_Inky:
+		m_colour = sf::Color::Cyan;
+		break;
+	case eGhostType::e_Clyde:
+		m_colour = sf::Color(255, 165, 0);
+		break;
+	default:;
+	}
+
+	m_position = constants::k_cornerPositions[static_cast<int>(m_type)];
 }
 
 void Ghost::Update()
 {
-	if (m_state == eGhostState::e_Frightened && m_position == m_homePositions[static_cast<int>(m_type)])
+	if (m_state == eGhostState::e_Frightened && m_position == constants::k_homePositions[static_cast<int>(m_type)])
 	{
 		m_homeTimer += m_clock.getElapsedTime().asSeconds();
-		if (m_homeTimer >= 5)
+		if (m_homeTimer >= constants::k_ghostHomeTime)
 		{
 			m_state = eGhostState::e_Chase;
 			m_homeTimer = 0.f;
@@ -65,12 +74,37 @@ void Ghost::Render(sf::RenderWindow& window)
 		window.draw(m_shape);
 	}
 
-	if (m_state != eGhostState::e_Frightened) m_shape.setFillColor(m_colour);
-	else m_shape.setFillColor({0, 19, 142});
+	if (m_state != eGhostState::e_Frightened)m_shape.setFillColor(m_colour);
+	else
+	{
+		const sf::Color frightenedColour = { 0, 19, 142 };
+		if (m_position == constants::k_homePositions[static_cast<int>(m_type)])
+		{
+			// Blend from blue to the normal ghost colour
+			const float normalisedTimer = m_homeTimer / static_cast<float>(constants::k_ghostHomeTime);
+
+
+			const sf::Uint32 lerpedColour = helpers::interpolate(frightenedColour.toInteger(), m_colour.toInteger(), normalisedTimer);
+
+			m_shape.setFillColor(sf::Color(lerpedColour));
+		} else m_shape.setFillColor(frightenedColour);
+	}
 
 	m_shape.setPosition(static_cast<sf::Vector2f>(m_position));
 
 	window.draw(m_shape);
+}
+
+void Ghost::Reset()
+{
+	m_state = eGhostState::e_Chase;
+	m_position = constants::k_cornerPositions[static_cast<int>(m_type)];
+
+	// Empty the path if it exists
+	while (!m_path.empty())
+	{
+		m_path.pop();
+	}
 }
 
 const eGhostState& Ghost::GetGhostState() const
@@ -305,8 +339,9 @@ void Ghost::CheckPacManCollisions()
 				m_pacMan.AddPoints(1000);
 			} else
 			{
-				// TODO: Penalty for pacman for running into the ghosts
+				m_pacMan.SetIsAlive(false);
 			}
+			std::cout << "I hit PacMan!" << std::endl;
 		}
 	}
 }
@@ -319,10 +354,10 @@ void Ghost::UpdatePathFinding()
 		ChaseModePathFinding();
 		break;
 	case eGhostState::e_Scatter:
-		AStarPathFinding(m_position, m_cornerPositions[static_cast<int>(m_type)]);
+		AStarPathFinding(m_position, constants::k_cornerPositions[static_cast<int>(m_type)]);
 		break;
 	case eGhostState::e_Frightened:
-		AStarPathFinding(m_position, m_homePositions[static_cast<int>(m_type)]);
+		AStarPathFinding(m_position, constants::k_homePositions[static_cast<int>(m_type)]);
 		break;
 	default:;
 	}
@@ -494,7 +529,7 @@ void Ghost::ChaseModePathFinding()
 
 			if (m_currentCorner > 3) m_currentCorner = 0;
 
-			AStarPathFinding(m_position, m_cornerPositions[m_currentCorner]);
+			AStarPathFinding(m_position, constants::k_cornerPositions[m_currentCorner]);
 		}
 
 		break;

@@ -21,10 +21,12 @@ enum class eGhostState
 class Ghost final : public Entity
 {
 public:
-	explicit Ghost(std::vector<std::vector<Tile>>& grid, sf::Vector2i position, eGhostType type, sf::Color colour, PacMan& pacMan);
+	explicit Ghost(eGhostType type, std::vector<std::vector<Tile>>& grid, PacMan& pacMan);
 	void Update();
 	void Render(sf::RenderWindow& window);
 
+	void Reset();
+	
 	const eGhostState& GetGhostState() const;
 	void SetGhostState(eGhostState state);
 
@@ -42,8 +44,6 @@ private:
 	std::stack<Tile*> m_path;
 	std::vector<Tile*> m_openList;
 	std::vector<Tile*> m_closedList;
-	sf::Vector2i m_cornerPositions[4];
-	sf::Vector2i m_homePositions[4];
 
 	Tile* GetLowestFCostNode(std::vector<Tile*>& list);
 	int CalculateDistanceCost(Tile* a, Tile* b) const;

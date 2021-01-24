@@ -5,6 +5,7 @@
 #include "Ghost.h"
 #include "PacMan.h"
 #include "PickUp.h"
+#include "Text.h"
 #include "TileManager.h"
 
 class Game
@@ -17,12 +18,17 @@ public:
 	void Render(sf::RenderWindow& window);
 
 private:
+	bool m_gameOver;
 	PacMan m_pacMan;
 	std::vector<PickUp> m_pickups;
 	std::vector<Ghost> m_ghosts;
 	TileManager m_tileManager;
-	sf::Text m_score;
+	
+	Text m_score;
+	Text m_lives;
+	Text m_end;
+	
+	sf::Font m_font;
 
 	void SpawnNewPowerUp();
 };
-

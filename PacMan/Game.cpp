@@ -6,8 +6,33 @@
 #include "Helpers.h"
 
 Game::Game() :
-	m_pacMan()
+	m_score(
+		"Score : ",
+		constants::k_gridCellSize,
+		{ 0.f, 0.f }
+	),
+	m_lives(
+		"Lives: ",
+		constants::k_gridCellSize,
+		{ constants::k_screenSize - 5 * constants::k_gridCellSize, 0.f }
+	),
+	m_end(
+		"Game Over",
+		2 * constants::k_gridCellSize,
+		{
+			(static_cast<float>(constants::k_screenSize) / 2.f) - 6 * constants::k_gridCellSize,
+			(static_cast<float>(constants::k_screenSize) / 2.f) - 2 * constants::k_gridCellSize
+		},
+		false
+	)
 {
+	m_font.loadFromFile("Data\\Font.ttf");
+
+	m_score.SetFont(m_font);
+	m_lives.SetFont(m_font);
+	m_end.SetFont(m_font);
+
+
 	if (!m_tileManager.LoadLevel("Data\\Level.csv"))
 	{
 		std::cout << "Error loading level data" << std::endl;
@@ -20,46 +45,26 @@ Game::Game() :
 	}
 
 	m_ghosts.emplace_back(
+		eGhostType::e_Blinky,
 		m_tileManager.GetLevelData(),
-		sf::Vector2i(
-			constants::k_screenSize - 2 * constants::k_gridCellSize, 
-			3 * constants::k_gridCellSize
-		), 
-		eGhostType::e_Blinky, 
-		sf::Color::Red, 
-		m_pacMan
-	);
-	
-	m_ghosts.emplace_back(
-		m_tileManager.GetLevelData(),
-		sf::Vector2i(
-			constants::k_screenSize / 2, 
-			constants::k_screenSize / 2 + constants::k_gridCellSize
-		), 
-		eGhostType::e_Pinky, 
-		sf::Color::Magenta, 
-		m_pacMan
-	);
-	
-	m_ghosts.emplace_back(
-		m_tileManager.GetLevelData(),
-		sf::Vector2i(
-			constants::k_screenSize / 2, 
-			constants::k_screenSize / 2
-		), 
-		eGhostType::e_Inky,
-		sf::Color::Cyan,
 		m_pacMan
 	);
 
 	m_ghosts.emplace_back(
+		eGhostType::e_Pinky,
 		m_tileManager.GetLevelData(),
-		sf::Vector2i(
-			constants::k_screenSize / 2, 
-			constants::k_screenSize / 2 - 5 * constants::k_gridCellSize
-		), 
+		m_pacMan
+	);
+
+	m_ghosts.emplace_back(
+		eGhostType::e_Inky,
+		m_tileManager.GetLevelData(),
+		m_pacMan
+	);
+
+	m_ghosts.emplace_back(
 		eGhostType::e_Clyde,
-		sf::Color(255, 165, 0),
+		m_tileManager.GetLevelData(),
 		m_pacMan
 	);
 }
@@ -86,58 +91,115 @@ void Game::Input()
 
 void Game::Update()
 {
-	m_pacMan.Update(m_tileManager.GetLevelData());
+	if (m_gameOver)
+	{
+		m_end.SetString(m_pacMan.GetLivesRemaining() <= 0 ? "Game Over" : "You Win!");
 
-	for (auto& pickup : m_pickups)
+		m_end.SetVisible(true);
+
+		m_score.SetPosition({
+			m_end.GetPosition().x,
+			m_end.GetPosition().y + 2 * constants::k_gridCellSize
+			});
+	} else
 	{
-		if (pickup.Visible())
+		if (m_pacMan.IsAlive())
 		{
-			pickup.CheckPacManCollisions(m_pacMan);
-		}
-	}
-	
-	for(auto& ghost : m_ghosts)
-	{
-		if (ghost.GetGhostState() != eGhostState::e_Frightened)
-		{
-			switch (m_pacMan.GetPacManState())
+			m_pacMan.Update(m_tileManager.GetLevelData());
+
+			// If all the coins are collected then pacman has won
+			int activeCoins = 0;
+
+			for (auto& pickup : m_pickups)
 			{
-			case ePacManState::e_Normal:
-				ghost.SetGhostState(eGhostState::e_Chase);
-				break;
-			case ePacManState::e_PowerUp:
-				ghost.SetGhostState(eGhostState::e_Scatter);
-				break;
-			default:;
+				switch (pickup.GetPickUpType())
+				{
+				case ePickUpType::e_Coin:
+					if (pickup.Visible())
+					{
+						activeCoins++;
+					}
+				case ePickUpType::e_PowerUp:
+					if (pickup.Visible())
+					{
+						pickup.CheckPacManCollisions(m_pacMan);
+					}
+					break;
+				default:
+					std::cout << "Unknown pickup" << std::endl;
+				}
+
+			}
+
+			if (activeCoins == 0)
+			{
+				m_gameOver = true;
+			}
+
+			for (auto& ghost : m_ghosts)
+			{
+				if (ghost.GetGhostState() != eGhostState::e_Frightened)
+				{
+					switch (m_pacMan.GetPacManState())
+					{
+					case ePacManState::e_Normal:
+						ghost.SetGhostState(eGhostState::e_Chase);
+						break;
+					case ePacManState::e_PowerUp:
+						ghost.SetGhostState(eGhostState::e_Scatter);
+						break;
+					default:;
+					}
+				}
+				ghost.Update();
+			}
+
+			if (helpers::rand_range(0, 1000) <= 5)
+			{
+				SpawnNewPowerUp();
+			}
+
+		} else
+		{
+			m_pacMan.Reset();
+			for (auto& ghost : m_ghosts)
+			{
+				ghost.Reset();
+			}
+
+			if (m_pacMan.GetLivesRemaining() == 0)
+			{
+				m_gameOver = true;
 			}
 		}
-		ghost.Update();
 	}
+	m_score.SetString("Score: " + std::to_string(m_pacMan.GetPoints()));
+	m_lives.SetString("Lives: " + std::to_string(m_pacMan.GetLivesRemaining()));
 
-	if(helpers::rand_range(0, 1000) <= 5)
-	{
-		SpawnNewPowerUp();
-	}
 }
 
 void Game::Render(sf::RenderWindow& window)
 {
 	m_tileManager.Render(window);
-	
-	for(const auto& pickup : m_pickups)
+
+	for (const auto& pickup : m_pickups)
 	{
 		if (pickup.Visible())
 		{
 			pickup.Render(window);
 		}
 	}
-	
+
 	m_pacMan.Render(window);
 
 	for (auto& ghost : m_ghosts)
 	{
 		ghost.Render(window);
 	}
+
+	m_score.Render(window);
+	m_lives.Render(window);
+	m_end.Render(window);
 }
 
 void Game::SpawnNewPowerUp()
@@ -156,7 +218,7 @@ void Game::SpawnNewPowerUp()
 		// See if there is already a coin or pickup at this position
 		for (auto& pickup : m_pickups)
 		{
-			if(pickup.Visible() && pickup.GetPosition() == randomTile.m_position) tileTaken = true;
+			if (pickup.Visible() && pickup.GetPosition() == randomTile.m_position) tileTaken = true;
 			else
 			{
 				if (!pickup.Visible() && !firstAvailablePickup)

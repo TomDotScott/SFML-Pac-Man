@@ -8,15 +8,14 @@
 
 PacMan::PacMan() :
 	Entity(
-		{
-			constants::k_gridCellSize,
-			2 * constants::k_gridCellSize
-		},
-		constants::k_gridCellSize,
-		eDirection::e_None,
-		sf::Color::Yellow
-	),
+	       constants::k_pacManSpawnPosition,
+	       constants::k_gridCellSize,
+	       eDirection::e_None,
+	       sf::Color::Yellow
+	      ),
 	m_points(0),
+	m_lives(3),
+	m_isAlive(true),
 	m_state(ePacManState::e_Normal),
 	m_powerUpTimer(0.f)
 {
@@ -61,6 +60,38 @@ void PacMan::PowerUp()
 void PacMan::AddPoints(const int amount)
 {
 	m_points += amount;
+}
+
+int PacMan::GetPoints() const
+{
+	return m_points;
+}
+
+int PacMan::GetLivesRemaining() const
+{
+	return m_lives;
+}
+
+void PacMan::Reset()
+{
+	m_position = constants::k_pacManSpawnPosition;
+	m_isAlive = true;
+}
+
+bool PacMan::IsAlive() const
+{
+	return m_isAlive;
+}
+
+void PacMan::SetIsAlive(const bool alive)
+{
+	if(!alive)
+	{
+		m_lives -= 1;
+		m_points -= 500;
+		if (m_points < 0) m_points = 0;
+	}
+	m_isAlive = alive;
 }
 
 void PacMan::Move()

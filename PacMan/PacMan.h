@@ -20,9 +20,18 @@ public:
 	
 	void PowerUp();
 	void AddPoints(int amount);
+	int GetPoints() const;
+	
+	int GetLivesRemaining() const;
+	void Reset();
+	
+	bool IsAlive() const;
+	void SetIsAlive(bool alive);
 
 private:
 	int m_points;
+	int m_lives;
+	bool m_isAlive;
 	ePacManState m_state;
 	float m_powerUpTimer;
 

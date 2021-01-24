@@ -76,3 +76,8 @@ bool PickUp::Visible() const
 {
 	return m_visible;
 }
+
+ePickUpType PickUp::GetPickUpType() const
+{
+	return m_type;
+}

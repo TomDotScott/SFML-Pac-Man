@@ -21,6 +21,8 @@ public:
 
 	bool Visible() const;
 
+	ePickUpType GetPickUpType() const;
+	
 	void CheckPacManCollisions(PacMan& pacman);
 	const sf::Vector2i& GetPosition() const;
 
