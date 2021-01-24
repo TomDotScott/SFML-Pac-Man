@@ -3,6 +3,7 @@
 #include <SFML/Window/Keyboard.hpp>
 
 #include "Constants.h"
+#include "Helpers.h"
 
 Game::Game() :
 	m_pacMan()
@@ -19,6 +20,7 @@ Game::Game() :
 	}
 
 	m_ghosts.emplace_back(
+		m_tileManager.GetLevelData(),
 		sf::Vector2i(
 			constants::k_screenSize - 2 * constants::k_gridCellSize, 
 			3 * constants::k_gridCellSize
@@ -29,6 +31,7 @@ Game::Game() :
 	);
 	
 	m_ghosts.emplace_back(
+		m_tileManager.GetLevelData(),
 		sf::Vector2i(
 			constants::k_screenSize / 2, 
 			constants::k_screenSize / 2 + constants::k_gridCellSize
@@ -39,6 +42,7 @@ Game::Game() :
 	);
 	
 	m_ghosts.emplace_back(
+		m_tileManager.GetLevelData(),
 		sf::Vector2i(
 			constants::k_screenSize / 2, 
 			constants::k_screenSize / 2
@@ -49,6 +53,7 @@ Game::Game() :
 	);
 
 	m_ghosts.emplace_back(
+		m_tileManager.GetLevelData(),
 		sf::Vector2i(
 			constants::k_screenSize / 2, 
 			constants::k_screenSize / 2 - 5 * constants::k_gridCellSize
@@ -93,17 +98,25 @@ void Game::Update()
 	
 	for(auto& ghost : m_ghosts)
 	{
-		switch (m_pacMan.GetPacManState())
+		if (ghost.GetGhostState() != eGhostState::e_Frightened)
 		{
-			case ePacManState::e_Normal: 
+			switch (m_pacMan.GetPacManState())
+			{
+			case ePacManState::e_Normal:
 				ghost.SetGhostState(eGhostState::e_Chase);
 				break;
-			case ePacManState::e_PowerUp: 
+			case ePacManState::e_PowerUp:
 				ghost.SetGhostState(eGhostState::e_Scatter);
 				break;
-			default: ;
+			default:;
+			}
 		}
-		ghost.Update(m_tileManager.GetLevelData());
+		ghost.Update();
+	}
+
+	if(helpers::rand_range(0, 1000) <= 5)
+	{
+		SpawnNewPowerUp();
 	}
 }
 
@@ -124,5 +137,38 @@ void Game::Render(sf::RenderWindow& window)
 	for (auto& ghost : m_ghosts)
 	{
 		ghost.Render(window);
+	}
+}
+
+void Game::SpawnNewPowerUp()
+{
+	// Find an appropriate place to spawn the new power-up
+	auto& map = m_tileManager.GetLevelData();
+	Tile& randomTile = map[1][1];
+	PickUp* firstAvailablePickup = nullptr;
+
+	bool tileTaken = false;
+	do
+	{
+		const sf::Vector2i random(helpers::rand_range(25, 750), helpers::rand_range(50, 725));
+		randomTile = map[helpers::world_coord_to_array_index(random.y)][helpers::world_coord_to_array_index(random.y)];
+
+		// See if there is already a coin or pickup at this position
+		for (auto& pickup : m_pickups)
+		{
+			if(pickup.Visible() && pickup.GetPosition() == randomTile.m_position) tileTaken = true;
+			else
+			{
+				if (!pickup.Visible() && !firstAvailablePickup)
+				{
+					firstAvailablePickup = &pickup;
+				}
+			}
+		}
+	} while (randomTile.m_type != eTileType::e_Path && !tileTaken);
+
+	if (firstAvailablePickup)
+	{
+		firstAvailablePickup->Initialise(randomTile.m_position, ePickUpType::e_PowerUp);
 	}
 }

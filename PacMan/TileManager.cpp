@@ -96,7 +96,7 @@ void TileManager::Render(sf::RenderWindow& window)
 				rec.setFillColor({ 128, 128, 128 });
 				break;
 			case eTileType::e_Wall:
-				rec.setFillColor({ 0, 0, 139 });
+				rec.setFillColor({ 0, 0, 64 });
 				break;
 			default:
 				std::cout << "Unknown tile type" << std::endl;

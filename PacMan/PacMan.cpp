@@ -37,8 +37,6 @@ void PacMan::Update(const std::vector<std::vector<Tile>>& tiles)
 		}
 	}
 	m_clock.restart();
-
-	std::cout << m_position.x << " " << m_position.y << std::endl;
 }
 
 void PacMan::Render(sf::RenderWindow& window)

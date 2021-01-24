@@ -67,6 +67,11 @@ void PickUp::CheckPacManCollisions(PacMan& pacman)
 	}
 }
 
+const sf::Vector2i& PickUp::GetPosition() const
+{
+	return m_position;
+}
+
 bool PickUp::Visible() const
 {
 	return m_visible;

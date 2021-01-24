@@ -1,7 +1,6 @@
 #pragma once
 #include "Entity.h"
 #include "PacMan.h"
-#include <list>
 #include <stack>
 
 enum class eGhostType
@@ -14,7 +13,6 @@ enum class eGhostType
 
 enum class eGhostState
 {
-	e_House,
 	e_Chase,
 	e_Scatter,
 	e_Frightened
@@ -23,34 +21,39 @@ enum class eGhostState
 class Ghost final : public Entity
 {
 public:
-	explicit Ghost(sf::Vector2i position, eGhostType type, sf::Color colour, const PacMan& pacMan);
-	void Update(std::vector<std::vector<Tile>>& tiles);
+	explicit Ghost(std::vector<std::vector<Tile>>& grid, sf::Vector2i position, eGhostType type, sf::Color colour, PacMan& pacMan);
+	void Update();
 	void Render(sf::RenderWindow& window);
 
+	const eGhostState& GetGhostState() const;
 	void SetGhostState(eGhostState state);
 
 private:
-	const PacMan& m_pacMan;
+	PacMan& m_pacMan;
 	eGhostType m_type;
 	eGhostState m_state;
-
+	float m_homeTimer;
+	
 	// The path-finding will be updated every 10 game ticks (once per second)
 	int m_updateTicks;
+	std::vector<std::vector<Tile>>& m_grid;
 	int m_currentCorner;
 
 	std::stack<Tile*> m_path;
 	std::vector<Tile*> m_openList;
 	std::vector<Tile*> m_closedList;
 	sf::Vector2i m_cornerPositions[4];
+	sf::Vector2i m_homePositions[4];
 
 	Tile* GetLowestFCostNode(std::vector<Tile*>& list);
 	int CalculateDistanceCost(Tile* a, Tile* b) const;
 	void CalculatePath(Tile* endNode);
-	std::vector<Tile*> GetNeighbourNodes(std::vector<std::vector<Tile>>& tiles, Tile* currentNode);
-	void AStarPathFinding(std::vector<std::vector<Tile>>& tiles, sf::Vector2i startPosition, sf::Vector2i endPosition);
-	void Move(std::vector<std::vector<Tile>>& tiles);
-	void UpdatePathFinding(std::vector<std::vector<Tile>>& tiles);
-	void ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles);
-	void ScatterModePathFinding(std::vector<std::vector<Tile>>& tiles);
+	std::vector<Tile*> GetNeighbourNodes(Tile* currentNode) const;
+	void AStarPathFinding(sf::Vector2i startPosition, sf::Vector2i endPosition);
+	void UpdatePathFinding();
+	void ChaseModePathFinding();
+	void Move();
+	void CheckPacManCollisions();
+
 };
 

@@ -22,5 +22,7 @@ private:
 	std::vector<Ghost> m_ghosts;
 	TileManager m_tileManager;
 	sf::Text m_score;
+
+	void SpawnNewPowerUp();
 };
 

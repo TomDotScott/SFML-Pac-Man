@@ -6,15 +6,17 @@
 #include "Constants.h"
 #include "Helpers.h"
 
-Ghost::Ghost(const sf::Vector2i position, const eGhostType type, const sf::Color colour, const PacMan& pacMan) :
+Ghost::Ghost(std::vector<std::vector<Tile>>& grid, const sf::Vector2i position, const eGhostType type, const sf::Color colour, PacMan& pacMan) :
 	Entity(position,
 		constants::k_gridCellSize,
 		eDirection::e_None,
 		colour),
 	m_pacMan(pacMan),
 	m_type(type),
-	m_state(eGhostState::e_Chase),
+	m_state(eGhostState::e_Frightened),
+	m_homeTimer(0.f),
 	m_updateTicks(0),
+	m_grid(grid),
 	m_currentCorner(0)
 {
 	// define the corners of the map for patrolling
@@ -23,13 +25,28 @@ Ghost::Ghost(const sf::Vector2i position, const eGhostType type, const sf::Color
 	m_cornerPositions[1] = { 30 * constants::k_gridCellSize, 2 * constants::k_gridCellSize };
 	m_cornerPositions[2] = { 30 * constants::k_gridCellSize, 29 * constants::k_gridCellSize };
 	m_cornerPositions[3] = { constants::k_gridCellSize, 29 * constants::k_gridCellSize };
+
+	m_homePositions[0] = { 350, 375 };
+	m_homePositions[1] = { 375, 375 };
+	m_homePositions[2] = { 400, 375 };
+	m_homePositions[3] = { 425, 375 };
 }
 
-void Ghost::Update(std::vector<std::vector<Tile>>& tiles)
+void Ghost::Update()
 {
-	Move(tiles);
-
-	// m_limitedDirections.clear();
+	if (m_state == eGhostState::e_Frightened && m_position == m_homePositions[static_cast<int>(m_type)])
+	{
+		m_homeTimer += m_clock.getElapsedTime().asSeconds();
+		if (m_homeTimer >= 5)
+		{
+			m_state = eGhostState::e_Chase;
+			m_homeTimer = 0.f;
+		}
+	} else
+	{
+		Move();
+		CheckPacManCollisions();
+	}
 
 	m_clock.restart();
 }
@@ -48,11 +65,17 @@ void Ghost::Render(sf::RenderWindow& window)
 		window.draw(m_shape);
 	}
 
+	if (m_state != eGhostState::e_Frightened) m_shape.setFillColor(m_colour);
+	else m_shape.setFillColor({0, 19, 142});
 
-	m_shape.setFillColor(m_colour);
 	m_shape.setPosition(static_cast<sf::Vector2f>(m_position));
 
 	window.draw(m_shape);
+}
+
+const eGhostState& Ghost::GetGhostState() const
+{
+	return m_state;
 }
 
 void Ghost::SetGhostState(const eGhostState state)
@@ -117,7 +140,7 @@ void Ghost::CalculatePath(Tile* endNode)
 	}
 }
 
-std::vector<Tile*> Ghost::GetNeighbourNodes(std::vector<std::vector<Tile>>& tiles, Tile* currentNode)
+std::vector<Tile*> Ghost::GetNeighbourNodes(Tile* currentNode) const
 {
 	std::vector<Tile*> neighbours;
 
@@ -128,31 +151,31 @@ std::vector<Tile*> Ghost::GetNeighbourNodes(std::vector<std::vector<Tile>>& tile
 	if (xIndex - 1 >= 0)
 	{
 		// Left
-		neighbours.push_back(&tiles[yIndex][xIndex - 1]);
+		neighbours.push_back(&m_grid[yIndex][xIndex - 1]);
 	}
 
-	if (xIndex + 1 < static_cast<int>(tiles[0].size()))
+	if (xIndex + 1 < static_cast<int>(m_grid[0].size()))
 	{
 		// Right
-		neighbours.push_back(&tiles[yIndex][xIndex + 1]);
+		neighbours.push_back(&m_grid[yIndex][xIndex + 1]);
 	}
 
 	// Top
 	if (yIndex - 1 >= 0)
 	{
-		neighbours.push_back(&tiles[yIndex - 1][xIndex]);
+		neighbours.push_back(&m_grid[yIndex - 1][xIndex]);
 	}
 
 	// Bottom
-	if (yIndex + 1 < static_cast<int>(tiles.size()))
+	if (yIndex + 1 < static_cast<int>(m_grid.size()))
 	{
-		neighbours.push_back(&tiles[yIndex + 1][xIndex]);
+		neighbours.push_back(&m_grid[yIndex + 1][xIndex]);
 	}
 
 	return neighbours;
 }
 
-void Ghost::AStarPathFinding(std::vector<std::vector<Tile>>& tiles, const sf::Vector2i startPosition, const sf::Vector2i endPosition)
+void Ghost::AStarPathFinding(const sf::Vector2i startPosition, const sf::Vector2i endPosition)
 {
 	// Calculate the array indices of the start and end positions
 	const sf::Vector2i startNodeIndices(
@@ -165,14 +188,14 @@ void Ghost::AStarPathFinding(std::vector<std::vector<Tile>>& tiles, const sf::Ve
 		endPosition.y / constants::k_gridCellSize
 	);
 
-	Tile* startNode = &tiles[startNodeIndices.y][startNodeIndices.x];
-	Tile* endNode = &tiles[endNodeIndices.y][endNodeIndices.x];
+	Tile* startNode = &m_grid[startNodeIndices.y][startNodeIndices.x];
+	Tile* endNode = &m_grid[endNodeIndices.y][endNodeIndices.x];
 
 	m_openList.clear();
 	m_closedList.clear();
 
 	// Cycle through grid, set g to infinite and calculate f cost
-	for (auto& tile : tiles)
+	for (auto& tile : m_grid)
 	{
 		for (auto& pathNode : tile)
 		{
@@ -209,7 +232,7 @@ void Ghost::AStarPathFinding(std::vector<std::vector<Tile>>& tiles, const sf::Ve
 		}
 
 
-		for (auto& neighbour : GetNeighbourNodes(tiles, currentNode))
+		for (auto& neighbour : GetNeighbourNodes(currentNode))
 		{
 			// Make sure the current neighbour node isn't in the closed list
 			if (helpers::is_in_vector(m_closedList, neighbour))
@@ -250,12 +273,12 @@ void Ghost::AStarPathFinding(std::vector<std::vector<Tile>>& tiles, const sf::Ve
 	}
 }
 
-void Ghost::Move(std::vector<std::vector<Tile>>& tiles)
+void Ghost::Move()
 {
 	m_updateTicks++;
 	if (m_updateTicks == 10 || m_path.empty())
 	{
-		UpdatePathFinding(tiles);
+		UpdatePathFinding();
 		m_updateTicks = 0;
 	}
 
@@ -270,30 +293,42 @@ void Ghost::Move(std::vector<std::vector<Tile>>& tiles)
 	}
 }
 
-void Ghost::UpdatePathFinding(std::vector<std::vector<Tile>>& tiles)
+void Ghost::CheckPacManCollisions()
 {
-	// Find the directions that the ghost CAN'T Travel in
-	CheckForBlockades(tiles);
+	if (m_state != eGhostState::e_Frightened)
+	{
+		if (m_position == m_pacMan.GetPosition())
+		{
+			if (m_pacMan.GetPacManState() == ePacManState::e_PowerUp)
+			{
+				m_state = eGhostState::e_Frightened;
+				m_pacMan.AddPoints(1000);
+			} else
+			{
+				// TODO: Penalty for pacman for running into the ghosts
+			}
+		}
+	}
+}
 
+void Ghost::UpdatePathFinding()
+{
 	switch (m_state)
 	{
-	case eGhostState::e_House:
-		// TODO: Move up and down and wait to be released
-		break;
 	case eGhostState::e_Chase:
-		ChaseModePathFinding(tiles);
+		ChaseModePathFinding();
 		break;
 	case eGhostState::e_Scatter:
-		ScatterModePathFinding(tiles);
+		AStarPathFinding(m_position, m_cornerPositions[static_cast<int>(m_type)]);
 		break;
 	case eGhostState::e_Frightened:
-		// TODO: Run away from PacMan, move wherever is furthest away
+		AStarPathFinding(m_position, m_homePositions[static_cast<int>(m_type)]);
 		break;
 	default:;
 	}
 }
 
-void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
+void Ghost::ChaseModePathFinding()
 {
 	switch (m_type)
 	{
@@ -308,63 +343,63 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 		switch (pacManDirection)
 		{
 		case eDirection::e_None:
-			AStarPathFinding(tiles, m_position, pacManPosition);
+			AStarPathFinding(m_position, pacManPosition);
 			break;
 		case eDirection::e_Up:
 			// If the tile directly below is legal, move towards that
 
-			if (tiles[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
+			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
 				[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
 			{
-				const sf::Vector2i tileBelowPosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
+				const sf::Vector2i tileBelowPosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
 					[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
 
-				AStarPathFinding(tiles, m_position, tileBelowPosition);
+				AStarPathFinding(m_position, tileBelowPosition);
 			} else
 			{
-				AStarPathFinding(tiles, m_position, pacManPosition);
+				AStarPathFinding(m_position, pacManPosition);
 			}
 			break;
 		case eDirection::e_Down:
 			// If the tile directly above is legal, move towards it
-			if (tiles[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
+			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
 				[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
 			{
-				const sf::Vector2i tileAbovePosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
+				const sf::Vector2i tileAbovePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
 					[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
 
-				AStarPathFinding(tiles, m_position, tileAbovePosition);
+				AStarPathFinding(m_position, tileAbovePosition);
 			} else
 			{
-				AStarPathFinding(tiles, m_position, pacManPosition);
+				AStarPathFinding(m_position, pacManPosition);
 			}
 			break;
 		case eDirection::e_Left:
 			// If the tile directly to the left is legal, move towards it
-			if (tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 				[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_type == eTileType::e_Path)
 			{
-				const sf::Vector2i leftTilePosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+				const sf::Vector2i leftTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 					[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_position;
 
-				AStarPathFinding(tiles, m_position, leftTilePosition);
+				AStarPathFinding(m_position, leftTilePosition);
 			} else
 			{
-				AStarPathFinding(tiles, m_position, pacManPosition);
+				AStarPathFinding(m_position, pacManPosition);
 			}
 			break;
 		case eDirection::e_Right:
 			// If the tile directly to the right is legal, move towards it
-			if (tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+			if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 				[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_type == eTileType::e_Path)
 			{
-				const sf::Vector2i rightTilePosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+				const sf::Vector2i rightTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 					[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_position;
 
-				AStarPathFinding(tiles, m_position, rightTilePosition);
+				AStarPathFinding(m_position, rightTilePosition);
 			} else
 			{
-				AStarPathFinding(tiles, m_position, pacManPosition);
+				AStarPathFinding(m_position, pacManPosition);
 			}break;
 		default:
 			break;
@@ -385,63 +420,63 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 			switch (pacManDirection)
 			{
 			case eDirection::e_None:
-				AStarPathFinding(tiles, m_position, pacManPosition);
+				AStarPathFinding(m_position, pacManPosition);
 				break;
 			case eDirection::e_Down:
 				// If the tile directly below is legal, move towards that
 
-				if (tiles[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
+				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
 					[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
 				{
-					const sf::Vector2i tileBelowPosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
+					const sf::Vector2i tileBelowPosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) + 1]
 						[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
 
-					AStarPathFinding(tiles, m_position, tileBelowPosition);
+					AStarPathFinding(m_position, tileBelowPosition);
 				} else
 				{
-					AStarPathFinding(tiles, m_position, pacManPosition);
+					AStarPathFinding(m_position, pacManPosition);
 				}
 				break;
 			case eDirection::e_Up:
 				// If the tile directly above is legal, move towards it
-				if (tiles[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
+				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
 					[helpers::world_coord_to_array_index(pacManPosition.x)].m_type == eTileType::e_Path)
 				{
-					const sf::Vector2i tileAbovePosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
+					const sf::Vector2i tileAbovePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y) - 1]
 						[helpers::world_coord_to_array_index(pacManPosition.x)].m_position;
 
-					AStarPathFinding(tiles, m_position, tileAbovePosition);
+					AStarPathFinding(m_position, tileAbovePosition);
 				} else
 				{
-					AStarPathFinding(tiles, m_position, pacManPosition);
+					AStarPathFinding(m_position, pacManPosition);
 				}
 				break;
 			case eDirection::e_Right:
 				// If the tile directly to the left is legal, move towards it
-				if (tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 					[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_type == eTileType::e_Path)
 				{
-					const sf::Vector2i leftTilePosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+					const sf::Vector2i leftTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 						[helpers::world_coord_to_array_index(pacManPosition.x) - 1].m_position;
 
-					AStarPathFinding(tiles, m_position, leftTilePosition);
+					AStarPathFinding(m_position, leftTilePosition);
 				} else
 				{
-					AStarPathFinding(tiles, m_position, pacManPosition);
+					AStarPathFinding(m_position, pacManPosition);
 				}
 				break;
 			case eDirection::e_Left:
 				// If the tile directly to the right is legal, move towards it
-				if (tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+				if (m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 					[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_type == eTileType::e_Path)
 				{
-					const sf::Vector2i rightTilePosition = tiles[helpers::world_coord_to_array_index(pacManPosition.y)]
+					const sf::Vector2i rightTilePosition = m_grid[helpers::world_coord_to_array_index(pacManPosition.y)]
 						[helpers::world_coord_to_array_index(pacManPosition.x) + 1].m_position;
 
-					AStarPathFinding(tiles, m_position, rightTilePosition);
+					AStarPathFinding(m_position, rightTilePosition);
 				} else
 				{
-					AStarPathFinding(tiles, m_position, pacManPosition);
+					AStarPathFinding(m_position, pacManPosition);
 				}break;
 			default:
 				break;
@@ -449,21 +484,17 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 		}
 	}
 	break;
+
+
 	case eGhostType::e_Inky:
 		// Patrol an area
 		if (m_path.empty())
 		{
 			m_currentCorner++;
 
-			if (m_currentCorner > 3)
-			{
-				m_currentCorner = 0;
-				//std::cout << "Resetting to the top left: " << std::endl;
-			}
+			if (m_currentCorner > 3) m_currentCorner = 0;
 
-			//std::cout << "Moving toward X : " << m_cornerPositions[m_currentCorner].x << " Y : " << m_cornerPositions[m_currentCorner].y << std::endl;
-
-			AStarPathFinding(tiles, m_position, m_cornerPositions[m_currentCorner]);
+			AStarPathFinding(m_position, m_cornerPositions[m_currentCorner]);
 		}
 
 		break;
@@ -471,21 +502,16 @@ void Ghost::ChaseModePathFinding(std::vector<std::vector<Tile>>& tiles)
 		// Move to a random position
 		if (m_path.empty())
 		{
-			Tile& randomTile = tiles[1][1];
+			Tile& randomTile = m_grid[1][1];
 			do
 			{
 				const sf::Vector2i random(helpers::rand_range(25, 750), helpers::rand_range(50, 725));
-				randomTile = tiles[helpers::world_coord_to_array_index(random.y)][helpers::world_coord_to_array_index(random.y)];
+				randomTile = m_grid[helpers::world_coord_to_array_index(random.y)][helpers::world_coord_to_array_index(random.y)];
 			} while (randomTile.m_type != eTileType::e_Path);
-			AStarPathFinding(tiles, m_position, randomTile.m_position);
+			AStarPathFinding(m_position, randomTile.m_position);
 		}
 
 		break;
 	default:;
 	}
-}
-
-void Ghost::ScatterModePathFinding(std::vector<std::vector<Tile>>& tiles)
-{
-	AStarPathFinding(tiles, m_position, m_cornerPositions[static_cast<int>(m_type)]);
 }

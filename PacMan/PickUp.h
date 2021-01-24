@@ -22,6 +22,7 @@ public:
 	bool Visible() const;
 
 	void CheckPacManCollisions(PacMan& pacman);
+	const sf::Vector2i& GetPosition() const;
 
 private:
 	sf::Vector2i m_position;
